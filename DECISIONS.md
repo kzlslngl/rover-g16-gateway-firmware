@@ -427,12 +427,15 @@ Bu belge ile ana ROS şeması çelişirse geliştirici sessizce birini seçmez:
 çelişki kaydedilir, ana sözleşme düzeltilir/sürümlenir ve ardından ESP
 uygulaması güncellenir.
 
-### Belgeyi hazırlayan denetim rolü
+### Belgeyi hazırlayan Ana Proje Codex'i denetim rolü
 
-Bu belge Codex'in **rover sistem uyumluluğu ve güvenlik mimarisi denetçisi**
-rolünde yaptığı inceleme sonucunda hazırlanmıştır.
+Bu belge **Ana Proje Codex'i** tarafından, **rover sistem uyumluluğu ve
+güvenlik mimarisi denetçisi** rolünde yapılan inceleme sonucunda
+hazırlanmıştır. Buradaki "Codex" ifadesi ESP firmware geliştirme Codex'ini
+değil, `rover-core-ros2` ana projesine bağlı üst seviye denetim otoritesini
+ifade eder.
 
-Bu rol:
+Ana Proje Codex'i:
 
 - firmware C/C++, CMake, PlatformIO veya ESP-IDF kodunu yazmaz/değiştirmez;
 - ESP-IDF/PlatformIO build veya karta yükleme çalıştırmaz;
@@ -446,3 +449,46 @@ Bu rol:
 Bu not bir otomatik onay değildir. Firmware uygunluğu ancak ilgili commit,
 PC build kanıtı, host testleri, register test vektörleri, masa testi ve
 donanım ölçüm kapıları yeniden incelendikten sonra kabul edilir.
+
+### ESP Firmware Codex'i uygulama rolü ve güncel durum
+
+Bu depoda çalışan **ESP Firmware Codex'i**, Ana Proje Codex'inden ayrı bir
+uygulama rolüdür. Firmware C/C++ kaynaklarını, CMake/PlatformIO yapılandırmasını
+ve testleri değiştirme; yerel build/test çalıştırma ve doğrulanmış değişiklikleri
+Git üzerinden yayınlama yetkisine sahiptir.
+
+ESP Firmware Codex'i:
+
+- Ana Proje Codex'i tarafından eklenen karar ve uyumluluk belgelerini inceler;
+- ana ROS/PLC sözleşmesine, protokol v1.1'e ve bu belgedeki güvenlik sınırına
+  uygun firmware geliştirir;
+- sözleşmeyle çelişen veya güvenlik açısından belirsiz bir talebi sessizce
+  uygulamaz; çelişkiyi kaydeder ve ana otoriteye geri bildirir;
+- firmware build, host test, statik kontrol ve donanım testi kanıtlarını ayrı
+  raporlar;
+- donanım ölçüm kapıları kapanmadan inversion, PHY/pin veya elektriksel profil
+  gibi değerleri production varsayımı olarak sabitlemez.
+
+**Güncel geliştirme aşaması:** Aşama 1 — kart gerektirmeyen güvenli çekirdek.
+
+Tamamlanan temel:
+
+- minimal ESP-IDF/PlatformIO proje iskeleti;
+- protokol sabitleri ve compile-time register yerleşimi kontrolleri;
+- CRC-32/ISO-HDLC ve big-endian register yardımcıları;
+- CRC/endian host test kaynakları;
+- geliştirici PC'sinde başarılı ESP32 firmware build doğrulaması.
+
+Sıradaki eksikler, özetle:
+
+1. saf 25-byte SBUS decoder, 16 kanal decode ve resync testleri;
+2. freshness/alive/stale/fault durumları ve hata sayaçları;
+3. atomik 64-register snapshot builder, session/sequence ve CRC testleri;
+4. native host test çalıştırma ve CI altyapısı;
+5. Aşama 1 tamamlandıktan sonra UART, Ethernet ve salt-okunur Modbus FC03;
+6. production öncesinde elektriksel ölçümler, kesin kart profili ve PLC/HIL
+   entegrasyon testleri.
+
+Ayrıntılı ve güncel iş listesi için `ROADMAP.md` kullanılır. Ana Proje Codex'i
+sonraki denetimlerde bu bölüm, `ROADMAP.md`, Git diff'i ve build/test kanıtlarını
+birlikte değerlendirir.
