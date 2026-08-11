@@ -186,3 +186,6 @@ UART/Ethernet/Modbus kodu bu çekirdek testleri geçmeden eklenmemelidir.
 Her değişiklikte ilgili host testleri, biçim/statik kontroller ve
 `git diff --check` çalıştırılmalı; donanım gerektiren testler ayrı
 raporlanmalıdır.
+
+Güncel uygulama durumu ve sıradaki işler için [`ROADMAP.md`](ROADMAP.md)
+dosyasına bakın.
