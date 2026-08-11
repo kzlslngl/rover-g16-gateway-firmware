@@ -378,3 +378,71 @@ Her firmware PR'ında:
 - [ ] PC firmware build kanıtı ayrı raporlandı;
 - [ ] donanım gerektiren sonuç, çalıştırılmadıysa açıkça belirtildi;
 - [ ] PLC/ROS uyumluluğunu etkileyen değişiklik ana sözleşmeye işlendi.
+
+## 15. Proje kimliği, ihtiyaçların kaynağı ve denetim rolü
+
+### Bu bileşenin kimliği
+
+Bu depo rover'ın ESP32-ETH01 G16 gateway bileşenidir. Görevi SKYDROID
+GR01/G16 alıcısından gelen SBUS verisini yapısal olarak decode etmek,
+freshness ve hata durumunu üretmek ve ham kanal snapshot'ını kablolu Ethernet
+üzerinden PLC'ye salt-okunur Modbus TCP verisi olarak sunmaktır.
+
+Bu bileşen:
+
+- ROS 2 node'u veya görev planlayıcısı değildir;
+- kanal kalibrasyonu, gaz/fren/direksiyon anlamlandırması yapmaz;
+- MANUAL/AUTO authority kararı vermez;
+- controlled stop veya safety fonksiyonu uygulamaz;
+- PLC ya da aktüatör çıkışı sürmez.
+
+### Kuralların sistem gerekçesi
+
+ESP, PLC ve Orin/ROS 2 ayrı depolarda ve ayrı geliştirme ortamlarında yazılır.
+CRC, endian, offset, session, freshness, flag veya sayaç anlamlarından yalnız
+birinin farklı uygulanması PLC'nin geçersiz SBUS verisini fresh/manual komut
+olarak yorumlamasına neden olabilir. Bu belge ESP firmware'inin ana rover
+sistemiyle aynı wire ve güvenlik sınırını uygulaması için gereken ortak
+sözleşmedir.
+
+### İsteklerin ve kararların kaynağı
+
+Ana sistem ve sözleşme kaynağı:
+[kzlslngl/rover-core-ros2](https://github.com/kzlslngl/rover-core-ros2)
+
+Bu belgenin ilk referansı:
+`66f6bde8b457ff8ef04ed045184f519dc34e5ef2`
+
+Talepler özellikle şu ana proje kaynaklarından gelir:
+
+- `rover_hardware/config/plc_protocol_v1.yaml`;
+- `rover_hardware/config/plc_protocol_v1_test_vectors.yaml`;
+- `rover_hardware/config/g16_gateway.yaml`;
+- `docs/PLC_ORIN_G16_HABERLESME_SOZLESMESI.md`;
+- `docs/ESP32_ETH01_G16_GATEWAY_UYGULAMA_NOTU.md`;
+- `docs/SISTEM_GEREKSINIMLERI_VE_KARARLAR.md`.
+
+Bu ESP deposu uygulama deposudur; wire protokolün bağımsız otoritesi değildir.
+Bu belge ile ana ROS şeması çelişirse geliştirici sessizce birini seçmez:
+çelişki kaydedilir, ana sözleşme düzeltilir/sürümlenir ve ardından ESP
+uygulaması güncellenir.
+
+### Belgeyi hazırlayan denetim rolü
+
+Bu belge Codex'in **rover sistem uyumluluğu ve güvenlik mimarisi denetçisi**
+rolünde yaptığı inceleme sonucunda hazırlanmıştır.
+
+Bu rol:
+
+- firmware C/C++, CMake, PlatformIO veya ESP-IDF kodunu yazmaz/değiştirmez;
+- ESP-IDF/PlatformIO build veya karta yükleme çalıştırmaz;
+- mevcut kodu ve Git diff'lerini salt-okunur inceler;
+- ana ROS/PLC sözleşmesine aykırı, belirsiz veya kanıtsız yapıları tespit eder;
+- bulguları ve gerekli kabul kriterlerini yalnız Markdown belgeleriyle
+  geliştiriciye aktarır;
+- düzeltmenin nasıl uygulanacağına mimari yön verir, uygulamayı firmware
+  geliştirme projesine bırakır.
+
+Bu not bir otomatik onay değildir. Firmware uygunluğu ancak ilgili commit,
+PC build kanıtı, host testleri, register test vektörleri, masa testi ve
+donanım ölçüm kapıları yeniden incelendikten sonra kabul edilir.
