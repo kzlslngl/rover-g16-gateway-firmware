@@ -476,15 +476,28 @@ Tamamlanan temel:
 - minimal ESP-IDF/PlatformIO proje iskeleti;
 - protokol sabitleri ve compile-time register yerleşimi kontrolleri;
 - CRC-32/ISO-HDLC ve big-endian register yardımcıları;
-- CRC/endian host test kaynakları;
+- saf SBUS decoder ve byte-gap/gürültü sonrası resync parser'ı;
+- freshness, hata sayaçları ve stale/valid durum üretimi;
+- 64-register staging snapshot builder, heartbeat/sequence ve CRC üretimi;
+- CRC/endian/SBUS/freshness/snapshot host testleri;
 - geliştirici PC'sinde başarılı ESP32 firmware build doğrulaması.
+
+11 Ağustos 2026 donanım doğrulaması:
+
+- SKYDROID GR01 SBUS çıkışı WT32-ETH01 GPIO35'e doğrudan bağlandı;
+- UART2 üzerinde `100000 8E2` ve RX inversion aktif olarak kararlı frame alındı;
+- gerçek alıcı footer değeri `0x00`, merkez kanal değeri yaklaşık `1002`,
+  gözlenen kanal hareket aralığı yaklaşık `282..1722` olarak doğrulandı;
+- test süresince frame-lost ve failsafe bitleri sıfır kaldı;
+- hedef kartın fiziksel flash kapasitesi 2 MB olarak algılandı ve build/upload
+  ayarı buna göre sabitlendi.
 
 Sıradaki eksikler, özetle:
 
-1. saf 25-byte SBUS decoder, 16 kanal decode ve resync testleri;
-2. freshness/alive/stale/fault durumları ve hata sayaçları;
-3. atomik 64-register snapshot builder, session/sequence ve CRC testleri;
-4. native host test çalıştırma ve CI altyapısı;
+1. boot başına kalıcı sayaç/random tabanlı `gateway_session_id` üretimi;
+2. görevler arası kritik bölümle atomik active snapshot değişimi;
+3. ana sözleşmeden tam 64-register known-result test vektörü;
+4. GitHub Actions, biçim ve statik analiz altyapısı;
 5. Aşama 1 tamamlandıktan sonra UART, Ethernet ve salt-okunur Modbus FC03;
 6. production öncesinde elektriksel ölçümler, kesin kart profili ve PLC/HIL
    entegrasyon testleri.

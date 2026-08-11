@@ -1,0 +1,30 @@
+name: firmware-ci
+
+on:
+  push:
+    branches: [main, "agent/**"]
+  pull_request:
+
+jobs:
+  host-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure host tests
+        run: cmake -S test -B test/build -DCMAKE_BUILD_TYPE=Release
+      - name: Build host tests
+        run: cmake --build test/build --parallel
+      - name: Run host tests
+        run: ctest --test-dir test/build --output-on-failure
+
+  esp32-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install PlatformIO
+        run: pip install platformio==6.1.19
+      - name: Build ESP32 firmware
+        run: pio run

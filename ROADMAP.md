@@ -17,47 +17,47 @@ bağımsız değiştirilmez.
 
 ### SBUS decoder
 
-- [ ] 25-byte SBUS frame yapısal doğrulaması
-- [ ] 16 adet 11-bit kanalın saf fonksiyonla decode edilmesi
-- [ ] Frame-lost ve failsafe bitlerinin ayrıştırılması
-- [ ] Geçersiz header/footer ve eksik frame reddi
-- [ ] Gürültü ve byte-gap sonrasında yeniden senkronizasyon
-- [ ] Bilinen frame ve sınır kanal değerleri testleri
+- [x] 25-byte SBUS frame yapısal doğrulaması
+- [x] 16 adet 11-bit kanalın saf fonksiyonla decode edilmesi
+- [x] Frame-lost ve failsafe bitlerinin ayrıştırılması
+- [x] Geçersiz header/footer ve eksik frame reddi
+- [x] Gürültü ve byte-gap sonrasında yeniden senkronizasyon
+- [x] Bilinen frame ve sınır kanal değerleri testleri
 
 ### Freshness ve tanılar
 
-- [ ] Son geçerli frame zamanının monotonic saatle izlenmesi
-- [ ] `frame_age_ms` değerinin `uint16` aralığında saturasyonu
-- [ ] Alive/stale/fault durum geçişleri
-- [ ] Geçerli, invalid, lost ve failsafe sayaçları
-- [ ] 32-bit sayaç taşmalarının tanımlı davranışı
-- [ ] Frozen-frame ve zaman taşması testleri
+- [x] Son geçerli frame zamanının monotonic saatle izlenmesi
+- [x] `frame_age_ms` değerinin `uint16` aralığında saturasyonu
+- [x] Alive/stale/fault durum geçişleri
+- [x] Geçerli, invalid, lost ve failsafe sayaçları
+- [x] 32-bit sayaç taşmalarının tanımlı davranışı
+- [x] Frozen-frame ve zaman taşması testleri
 
 ### Register snapshot
 
-- [ ] 64-register staging görüntüsünün sıfırdan kurulması
-- [ ] Reserved registerların daima sıfır tutulması
+- [x] 64-register staging görüntüsünün sıfırdan kurulması
+- [x] Reserved registerların daima sıfır tutulması
 - [ ] Boot başına değişen `gateway_session_id`
-- [ ] Heartbeat ve sequence yönetimi
-- [ ] Register 320–379 üzerinden CRC üretimi
+- [x] Heartbeat ve sequence yönetimi
+- [x] Register 320–379 üzerinden CRC üretimi
 - [ ] Aynı begin/end sequence ile atomik aktif görüntü değişimi
 - [ ] Protokol test vektörleriyle birebir karşılaştırma
 - [ ] Reboot, eski snapshot ve bozuk CRC testleri
 
 ### Host doğrulama altyapısı
 
-- [ ] Windows için native C derleyicisinin kurulması veya CI ortamının eklenmesi
-- [ ] `test/core_tests.c` testlerinin host üzerinde çalıştırılması
-- [ ] SBUS, freshness ve snapshot testlerinin host test hedefine eklenmesi
+- [x] Windows için native C derleyicisinin kurulması veya CI ortamının eklenmesi
+- [x] `test/core_tests.c` testlerinin host üzerinde çalıştırılması
+- [x] SBUS, freshness ve snapshot testlerinin host test hedefine eklenmesi
 - [ ] Biçim ve statik analiz komutlarının belgelenmesi
-- [ ] GitHub Actions üzerinde host test ve firmware build kontrolü
+- [x] GitHub Actions üzerinde host test ve firmware build kontrolü
 
 ## Aşama 2 — ESP32 çevre birimleri
 
 Bu aşamaya Aşama 1 testleri geçmeden başlanmaz.
 
-- [ ] GPIO35 RX-only UART, 100000 baud ve 8E2 adaptörü
-- [ ] Ölçüme bağlı, yapılandırılabilir RX inversion seçeneği
+- [x] GPIO35 RX-only UART, 100000 baud ve 8E2 adaptörü
+- [x] GR01 üzerinde doğrulanmış inverted RX yapılandırması
 - [ ] UART hata ve byte-gap tanıları
 - [ ] Kesin kart varyantına uygun Ethernet PHY/pin yapılandırması
 - [ ] Statik/DHCP ağ ayarlarının yapılandırılabilir tutulması
