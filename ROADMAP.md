@@ -50,7 +50,7 @@ bağımsız değiştirilmez.
 - [x] Windows için native C derleyicisinin kurulması veya CI ortamının eklenmesi
 - [x] `test/core_tests.c` testlerinin host üzerinde çalıştırılması
 - [x] SBUS, freshness ve snapshot testlerinin host test hedefine eklenmesi
-- [ ] Biçim ve statik analiz komutlarının belgelenmesi
+- [x] Biçim ve statik analiz komutlarının belgelenmesi
 - [x] GitHub Actions üzerinde host test ve firmware build kontrolü
 
 ## Aşama 2 — ESP32 çevre birimleri
@@ -92,6 +92,8 @@ Bu aşamaya Aşama 1 testleri geçmeden başlanmaz.
 
 ## Sıradaki geliştirme dilimi
 
-LAN8720 link ve DHCP alımı gerçek kartta doğrulanmalıdır. Ardından aktif register
-görüntüsü eşzamanlı erişime uygun hâle getirilerek salt-okunur Modbus TCP FC03
-sunucusuna bağlanmalıdır.
+PLC/HIL gelmeden tamamlanabilecek işler ana protokol vektörlerinin host
+testlerinde korunması ve kontrollü hata enjeksiyon altyapısıdır. UART
+parity/framing/overflow elektriksel enjeksiyonu uygun sinyal üreteci bekler.
+Production IP, PLC poll/timeout, kanal mapping ve neutral/re-arm değerleri PLC
+projesiyle birlikte kesinleştirilmelidir.

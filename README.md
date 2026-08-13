@@ -209,3 +209,6 @@ dosyasında toplanmıştır.
 
 Heap, bloklama ve watchdog denetim sonucu [`RUNTIME_AUDIT.md`](RUNTIME_AUDIT.md)
 dosyasında tutulur.
+
+Yerel/CI biçim ve statik uyarı kabul kapısı
+[`QUALITY_CHECKS.md`](QUALITY_CHECKS.md) dosyasında belgelenmiştir.
