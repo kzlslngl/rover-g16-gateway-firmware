@@ -7,7 +7,6 @@
 #include "esp_log.h"
 #include "esp_netif.h"
 #include "freertos/FreeRTOS.h"
-#include "freertos/semphr.h"
 
 static const char *TAG = "g16_ethernet";
 
@@ -18,24 +17,23 @@ enum {
     ROVER_ETH_MDIO_GPIO = 18,
 };
 
-static SemaphoreHandle_t status_mutex;
+static portMUX_TYPE status_lock = portMUX_INITIALIZER_UNLOCKED;
 static struct rover_ethernet_status status;
 
 static void record_link_status(bool link_up)
 {
-    if (xSemaphoreTake(status_mutex, portMAX_DELAY) == pdTRUE) {
-        status.link_up = link_up;
-        if (link_up) {
-            ++status.link_up_count;
-        } else {
-            ++status.link_down_count;
-        }
-        if (!link_up) {
-            status.has_ipv4 = false;
-            status.ipv4.addr = 0;
-        }
-        xSemaphoreGive(status_mutex);
+    taskENTER_CRITICAL(&status_lock);
+    status.link_up = link_up;
+    if (link_up) {
+        ++status.link_up_count;
+    } else {
+        ++status.link_down_count;
     }
+    if (!link_up) {
+        status.has_ipv4 = false;
+        status.ipv4.addr = 0;
+    }
+    taskEXIT_CRITICAL(&status_lock);
 }
 
 static void on_ethernet_event(void *arg, esp_event_base_t event_base,
@@ -74,13 +72,12 @@ static void on_got_ipv4(void *arg, esp_event_base_t event_base,
     (void)event_id;
     const ip_event_got_ip_t *event = event_data;
 
-    if (xSemaphoreTake(status_mutex, portMAX_DELAY) == pdTRUE) {
-        status.link_up = true;
-        status.has_ipv4 = true;
-        status.ipv4 = event->ip_info.ip;
-        ++status.ipv4_ready_count;
-        xSemaphoreGive(status_mutex);
-    }
+    taskENTER_CRITICAL(&status_lock);
+    status.link_up = true;
+    status.has_ipv4 = true;
+    status.ipv4 = event->ip_info.ip;
+    ++status.ipv4_ready_count;
+    taskEXIT_CRITICAL(&status_lock);
 
     ESP_LOGI(TAG, "IPv4 ready: address=" IPSTR " gateway=" IPSTR " netmask=" IPSTR,
              IP2STR(&event->ip_info.ip), IP2STR(&event->ip_info.gw),
@@ -89,24 +86,20 @@ static void on_got_ipv4(void *arg, esp_event_base_t event_base,
 
 struct rover_ethernet_status rover_ethernet_get_status(void)
 {
-    struct rover_ethernet_status copy = {0};
-    if (status_mutex != NULL &&
-        xSemaphoreTake(status_mutex, portMAX_DELAY) == pdTRUE) {
-        copy = status;
-        xSemaphoreGive(status_mutex);
-    }
+    struct rover_ethernet_status copy;
+    taskENTER_CRITICAL(&status_lock);
+    copy = status;
+    taskEXIT_CRITICAL(&status_lock);
     return copy;
 }
 
 esp_err_t rover_ethernet_start(void)
 {
-    if (status_mutex != NULL) {
+    static bool started;
+    if (started) {
         return ESP_ERR_INVALID_STATE;
     }
-    status_mutex = xSemaphoreCreateMutex();
-    if (status_mutex == NULL) {
-        return ESP_ERR_NO_MEM;
-    }
+    started = true;
     memset(&status, 0, sizeof(status));
 
     esp_err_t result = esp_netif_init();

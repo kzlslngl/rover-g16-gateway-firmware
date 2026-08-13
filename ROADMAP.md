@@ -67,7 +67,7 @@ Bu aşamaya Aşama 1 testleri geçmeden başlanmaz.
 - [x] Yalnız FC03 ve yalnız 64-register bloğunu sunan Modbus TCP sunucusu
 - [x] Tüm Modbus yazma fonksiyonlarının reddedilmesi
 - [x] Client, Ethernet ve watchdog tanıları
-- [ ] Çalışma yolunda dinamik bellek ve uzun bloklayan çağrı denetimi
+- [x] Çalışma yolunda dinamik bellek ve uzun bloklayan çağrı denetimi
 
 ## Aşama 3 — Masa ve entegrasyon testleri
 
