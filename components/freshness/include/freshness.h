@@ -10,7 +10,9 @@
 struct rover_freshness_state {
     uint16_t channels[ROVER_G16_CHANNEL_COUNT];
     uint64_t last_usable_frame_us;
+    uint64_t period_sample_us;
     uint32_t frame_period_us;
+    uint32_t frames_since_period_sample;
     uint32_t sbus_frame_counter;
     uint32_t invalid_frame_count;
     uint32_t frame_lost_count;

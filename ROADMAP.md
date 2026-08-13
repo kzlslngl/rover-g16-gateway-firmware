@@ -37,7 +37,7 @@ bağımsız değiştirilmez.
 
 - [x] 64-register staging görüntüsünün sıfırdan kurulması
 - [x] Reserved registerların daima sıfır tutulması
-- [ ] Boot başına değişen `gateway_session_id`
+- [x] Boot başına değişen `gateway_session_id`
 - [x] Heartbeat ve sequence yönetimi
 - [x] Register 320–379 üzerinden CRC üretimi
 - [ ] Aynı begin/end sequence ile atomik aktif görüntü değişimi

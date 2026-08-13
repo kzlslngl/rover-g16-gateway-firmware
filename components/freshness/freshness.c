@@ -8,6 +8,17 @@ static uint32_t saturate_u64_to_u32(uint64_t value)
     return value > UINT32_MAX ? UINT32_MAX : (uint32_t)value;
 }
 
+enum {
+    PERIOD_SAMPLE_MIN_ELAPSED_US = 1000,
+    SBUS_PERIOD_MIN_US = 5000,
+    SBUS_PERIOD_MAX_US = 20000,
+};
+
+static bool period_sample_is_plausible(uint64_t sample)
+{
+    return sample >= SBUS_PERIOD_MIN_US && sample <= SBUS_PERIOD_MAX_US;
+}
+
 void rover_freshness_init(struct rover_freshness_state *state)
 {
     if (state != NULL) {
@@ -59,10 +70,21 @@ bool rover_freshness_record_frame(struct rover_freshness_state *state,
     }
 
     if (state->has_usable_frame) {
-        const uint64_t period = now_us >= state->last_usable_frame_us
-                                    ? now_us - state->last_usable_frame_us
-                                    : UINT64_MAX;
-        state->frame_period_us = saturate_u64_to_u32(period);
+        ++state->frames_since_period_sample;
+        const uint64_t elapsed = now_us >= state->period_sample_us
+                                     ? now_us - state->period_sample_us
+                                     : UINT64_MAX;
+        if (elapsed >= PERIOD_SAMPLE_MIN_ELAPSED_US) {
+            const uint64_t average =
+                elapsed / state->frames_since_period_sample;
+            if (period_sample_is_plausible(average)) {
+                state->frame_period_us = saturate_u64_to_u32(average);
+            }
+            state->period_sample_us = now_us;
+            state->frames_since_period_sample = 0;
+        }
+    } else {
+        state->period_sample_us = now_us;
     }
     memcpy(state->channels, frame->channels, sizeof(state->channels));
     state->last_usable_frame_us = now_us;

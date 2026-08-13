@@ -35,10 +35,17 @@ vektörü oluşturulmalıdır.
 
 ## OI-003 — Session ID entegrasyon kanıtı
 
-**Durum:** Kart/NVS entegrasyonu bekleniyor.
+**Durum:** Çözüldü; kart/NVS entegrasyonu doğrulandı.
 
 Donanımdan bağımsız session türetme fonksiyonu cihaz kimliği, kalıcı boot
 counter ve random değeri birleştirecek şekilde tanımlanmıştır. Ancak production
 uygunluğu için ESP adaptörünün benzersiz cihaz kimliğini okuduğu, NVS boot
 counter'ı boot başına yalnız bir kez atomik artırdığı ve donanım random kaynağı
 başarısızlığını decoder fault'a çevirdiği kart üzerinde doğrulanmalıdır.
+
+13 Ağustos 2026 kart testinde eFuse MAC kimliği, NVS'de atomik artırılan boot
+sayacı ve donanım rastgele değeri session türetimine bağlandı. Ardışık EN
+resetlerinde `boot=2 / session=1ce9fb56` ve ardından
+`boot=3 / session=6c1cf188` gözlendi; snapshot sequence her iki boot'ta da
+1'den başladı. NVS okunamadığında veya commit edilemediğinde firmware sessizce
+devam etmek yerine fail-fast davranır.

@@ -233,6 +233,38 @@ static void test_freshness_saturation_and_counter_wrap(void)
     assert(state.invalid_frame_count == 0);
 }
 
+static void test_freshness_averages_batched_frame_timestamps(void)
+{
+    struct rover_freshness_state state;
+    struct rover_sbus_frame frame = make_usable_frame();
+    rover_freshness_init(&state);
+
+    assert(rover_freshness_record_frame(&state, &frame, 1000000));
+    assert(rover_freshness_record_frame(&state, &frame, 1000065));
+    assert(rover_freshness_record_frame(&state, &frame, 1000130));
+    assert(rover_freshness_record_frame(&state, &frame, 1000195));
+    assert(state.frame_period_us == 0);
+    assert(rover_freshness_record_frame(&state, &frame, 1049000));
+    assert(state.frame_period_us == 12250);
+}
+
+static void test_freshness_rejects_scheduler_delay_outlier(void)
+{
+    struct rover_freshness_state state;
+    struct rover_sbus_frame frame = make_usable_frame();
+    rover_freshness_init(&state);
+
+    assert(rover_freshness_record_frame(&state, &frame, 1000000));
+    assert(rover_freshness_record_frame(&state, &frame, 1010000));
+    assert(state.frame_period_us == 10000);
+    assert(rover_freshness_record_frame(&state, &frame, 1060000));
+    assert(state.frame_period_us == 10000);
+    assert(rover_freshness_record_frame(&state, &frame, 1085000));
+    assert(state.frame_period_us == 10000);
+    assert(rover_freshness_record_frame(&state, &frame, 1130000));
+    assert(state.frame_period_us == 10000);
+}
+
 static void test_register_image_boot_and_crc(void)
 {
     struct rover_register_image_state image_state;
@@ -317,6 +349,8 @@ int main(void)
     test_freshness_boot_and_valid_frame();
     test_freshness_stale_lost_failsafe_and_fault();
     test_freshness_saturation_and_counter_wrap();
+    test_freshness_averages_batched_frame_timestamps();
+    test_freshness_rejects_scheduler_delay_outlier();
     test_register_image_boot_and_crc();
     test_register_image_valid_channels_and_progress();
     test_session_id_is_deterministic_and_input_sensitive();

@@ -492,14 +492,23 @@ Tamamlanan temel:
 - hedef kartın fiziksel flash kapasitesi 2 MB olarak algılandı ve build/upload
   ayarı buna göre sabitlendi.
 
+13 Ağustos 2026 çalışma zamanı doğrulaması:
+
+- gerçek SBUS kareleri freshness ve 64-register snapshot hattına bağlandı;
+- `VALID | ALIVE`, frame age, filtrelenmiş frame period, sequence ve CRC alanları
+  kart üzerinde canlı veriyle doğrulandı;
+- GR01 için kabul edilen frame-period ölçüm penceresi `5000..20000 us` olarak
+  sabitlendi; UART görev/log gecikmesi kaynaklı aykırı örnekler reddedilir;
+- NVS boot sayacı ardışık resetlerde 2'den 3'e ilerledi, session ID değişti ve
+  snapshot sequence her boot'ta yeniden 1'den başladı.
+
 Sıradaki eksikler, özetle:
 
-1. boot başına kalıcı sayaç/random tabanlı `gateway_session_id` üretimi;
-2. görevler arası kritik bölümle atomik active snapshot değişimi;
-3. ana sözleşmeden tam 64-register known-result test vektörü;
-4. GitHub Actions, biçim ve statik analiz altyapısı;
-5. Aşama 1 tamamlandıktan sonra UART, Ethernet ve salt-okunur Modbus FC03;
-6. production öncesinde elektriksel ölçümler, kesin kart profili ve PLC/HIL
+1. görevler arası kritik bölümle atomik active snapshot değişimi;
+2. ana sözleşmeden tam 64-register known-result test vektörü;
+3. biçim ve statik analiz komutlarının belgelenmesi;
+4. Ethernet PHY adaptörü ve salt-okunur Modbus FC03 sunucusu;
+5. production öncesinde elektriksel ölçümler, kesin kart profili ve PLC/HIL
    entegrasyon testleri.
 
 Ayrıntılı ve güncel iş listesi için `ROADMAP.md` kullanılır. Ana Proje Codex'i
