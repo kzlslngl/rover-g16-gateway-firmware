@@ -1,0 +1,15 @@
+menu "Rover G16 Ethernet profile"
+
+config ROVER_ETH_IPV4_ADDR
+    string "Gateway static IPv4 address"
+    default "192.168.2.166"
+
+config ROVER_ETH_IPV4_GATEWAY
+    string "IPv4 gateway / bench PC address"
+    default "192.168.2.241"
+
+config ROVER_ETH_IPV4_NETMASK
+    string "IPv4 netmask"
+    default "255.255.255.0"
+
+endmenu

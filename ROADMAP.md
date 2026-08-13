@@ -61,8 +61,8 @@ Bu aşamaya Aşama 1 testleri geçmeden başlanmaz.
 - [x] UART parity/framing/overflow ve byte-gap tanıları
 - [x] ESP32-ETH01 v1.4 LAN8720 Ethernet PHY/pin yapılandırması
 - [x] Ethernet link ve statik IPv4 davranışının gerçek kartta doğrulanması
-- [x] Masa testi için statik `192.168.144.166/24` ağ profili
-- [ ] Statik/DHCP ağ ayarlarının build-time yapılandırılabilir tutulması
+- [x] Masa testi için statik `192.168.2.166/24` ağ profili
+- [x] Statik IPv4 ağ ayarlarının build-time yapılandırılabilir tutulması
 - [x] Yalnız FC03 ve yalnız 64-register bloğunu sunan Modbus TCP sunucusu
 - [x] Tüm Modbus yazma fonksiyonlarının reddedilmesi
 - [x] Client, Ethernet ve watchdog tanıları

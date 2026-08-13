@@ -18,10 +18,6 @@ enum {
     ROVER_ETH_MDIO_GPIO = 18,
 };
 
-#define ROVER_ETH_IPV4_ADDR "192.168.144.166"
-#define ROVER_ETH_IPV4_GATEWAY "192.168.144.10"
-#define ROVER_ETH_IPV4_NETMASK "255.255.255.0"
-
 static SemaphoreHandle_t status_mutex;
 static struct rover_ethernet_status status;
 
@@ -133,9 +129,10 @@ esp_err_t rover_ethernet_start(void)
         return result;
     }
     esp_netif_ip_info_t ip_info = {0};
-    if (esp_netif_str_to_ip4(ROVER_ETH_IPV4_ADDR, &ip_info.ip) != ESP_OK ||
-        esp_netif_str_to_ip4(ROVER_ETH_IPV4_GATEWAY, &ip_info.gw) != ESP_OK ||
-        esp_netif_str_to_ip4(ROVER_ETH_IPV4_NETMASK, &ip_info.netmask) != ESP_OK) {
+    if (esp_netif_str_to_ip4(CONFIG_ROVER_ETH_IPV4_ADDR, &ip_info.ip) != ESP_OK ||
+        esp_netif_str_to_ip4(CONFIG_ROVER_ETH_IPV4_GATEWAY, &ip_info.gw) != ESP_OK ||
+        esp_netif_str_to_ip4(CONFIG_ROVER_ETH_IPV4_NETMASK,
+                            &ip_info.netmask) != ESP_OK) {
         return ESP_ERR_INVALID_ARG;
     }
     result = esp_netif_set_ip_info(netif, &ip_info);
@@ -194,7 +191,7 @@ esp_err_t rover_ethernet_start(void)
              ROVER_ETH_PHY_ADDRESS, ROVER_ETH_PHY_RESET_GPIO,
              ROVER_ETH_MDC_GPIO, ROVER_ETH_MDIO_GPIO);
     ESP_LOGI(TAG, "static IPv4=%s gateway=%s netmask=%s",
-             ROVER_ETH_IPV4_ADDR, ROVER_ETH_IPV4_GATEWAY,
-             ROVER_ETH_IPV4_NETMASK);
+             CONFIG_ROVER_ETH_IPV4_ADDR, CONFIG_ROVER_ETH_IPV4_GATEWAY,
+             CONFIG_ROVER_ETH_IPV4_NETMASK);
     return esp_eth_start(eth_handle);
 }
