@@ -530,3 +530,9 @@ Sıradaki eksikler, özetle:
 Ayrıntılı ve güncel iş listesi için `ROADMAP.md` kullanılır. Ana Proje Codex'i
 sonraki denetimlerde bu bölüm, `ROADMAP.md`, Git diff'i ve build/test kanıtlarını
 birlikte değerlendirir.
+
+13 Ağustos 2026 bench reboot testinde ESP session ID değeri
+`0x7A0AB882` değerinden `0x8AE58A4C` değerine değişti. Yeni bootta sequence ve
+heartbeat yeniden başlayıp ilerledi; SBUS frame akışı, CRC ve begin/end sequence
+kontrolleri geçti. Eski session snapshot'ının reddi PLC authority/fail-safe
+mantığının HIL kabul testi olarak açık kalır.

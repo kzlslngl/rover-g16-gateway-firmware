@@ -42,7 +42,8 @@ bağımsız değiştirilmez.
 - [x] Register 320–379 üzerinden CRC üretimi
 - [x] Aynı begin/end sequence ile atomik aktif görüntü değişimi
 - [x] Ana proje 64-register known-result vektörüyle birebir karşılaştırma
-- [ ] Reboot, eski snapshot ve bozuk CRC testleri
+- [x] ESP rebootunda yeni session ID ve sağlıklı yeni snapshot üretimi
+- [ ] PLC'de eski session snapshot'ı ve bozuk CRC reddi
 
 ### Host doğrulama altyapısı
 
@@ -72,7 +73,8 @@ Bu aşamaya Aşama 1 testleri geçmeden başlanmaz.
 
 - [ ] Bilinen SBUS frame'lerinden 16 kanal decode testi
 - [ ] Lost, failsafe, frozen-frame ve sayaç anomalisi enjeksiyonu
-- [ ] Reboot/session değişimi ve eski snapshot reddi
+- [x] ESP reboot/session değişimi ve yeni snapshot bütünlüğü
+- [ ] PLC/HIL üzerinde eski session snapshot reddi
 - [ ] CRC/endian sonuçlarının ana ROS sözleşmesiyle karşılaştırılması
 - [ ] Ethernet kopması ve PLC poll kesilmesi
 - [ ] Orin kapalıyken G16 → ESP → PLC manuel yol testi

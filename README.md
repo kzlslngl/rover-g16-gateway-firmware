@@ -202,3 +202,7 @@ raporlanmalıdır.
 
 Güncel uygulama durumu ve sıradaki işler için [`ROADMAP.md`](ROADMAP.md)
 dosyasına bakın.
+
+PLC programlama ve HIL hazırlığı için gerekli register kabul sırası, fail-safe
+kuralları ve beklenen saha bilgileri [`PLC_INTEGRATION_GUIDE.md`](PLC_INTEGRATION_GUIDE.md)
+dosyasında toplanmıştır.
