@@ -107,10 +107,11 @@ CRC-32/ISO-HDLC'dir. Kontrol vektörü
 Tutarlı snapshot yayımlama sırası:
 
 1. Yeni sequence değerini seç.
-2. Alanları ve reserved sıfırlarını staging görüntüsünde oluştur.
-3. Register 320-379 üzerinden CRC hesapla.
-4. Aynı değeri `begin_sequence` ve `end_sequence` alanlarına yaz.
-5. 64-register görüntüsünü atomik biçimde aktif görüntüyle değiştir.
+2. `begin_sequence` dahil CRC kapsamındaki alanları ve reserved sıfırlarını
+   staging görüntüsünde oluştur.
+3. Register 320-379 üzerinden CRC hesaplayıp 380-381'e yaz.
+4. Aynı sequence değerini CRC kapsamı dışındaki `end_sequence` alanına yaz.
+5. Tamamlanmış 64-register görüntüsünü atomik biçimde active yap.
 
 Her boot/watchdog resetinde yeni bir `gateway_session_id` üretilir; önceki
 snapshot yeniden geçerli ilan edilmez.

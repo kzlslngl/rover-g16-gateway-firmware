@@ -109,10 +109,12 @@ Firmware iki ayrı 64-register görüntü kullanır:
 Her yayın çevriminde:
 
 1. staging görüntüsü tamamen sıfırlanır;
-2. header, session, sayaçlar, zaman, flags ve kanallar yazılır;
+2. header, `begin_sequence`, session, sayaçlar, zaman, flags ve kanallar
+   yazılır;
 3. reserved alanların sıfır olduğu doğrulanır;
 4. absolute 320-379 eşdeğeri 60 register üzerinden CRC hesaplanır;
-5. aynı yeni sequence değeri begin ve end alanlarına yazılır;
+5. CRC 380-381'e, aynı sequence değeri CRC kapsamı dışındaki
+   `end_sequence` 382-383'e yazılır;
 6. tamamlanmış staging görüntüsü kısa bir kritik bölümde active yapılır.
 
 Modbus callback'i yapım aşamasındaki staging görüntüsünü hiçbir zaman okumaz.
@@ -412,6 +414,10 @@ Ana sistem ve sözleşme kaynağı:
 
 Bu belgenin ilk referansı:
 `66f6bde8b457ff8ef04ed045184f519dc34e5ef2`
+
+Ana Proje Codex'inin bu incelemede doğruladığı güncel
+`rover-core-ros2/main` referansı:
+`a464881182189243e27e413fd4b0d136ed3a5322`
 
 Talepler özellikle şu ana proje kaynaklarından gelir:
 
