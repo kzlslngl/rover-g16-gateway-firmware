@@ -45,6 +45,10 @@ veri üretmelidir.
 Modbus TCP sunucusu `192.168.144.166:502`, unit ID `1` üzerinde yalnızca FC03
 ile başlangıç adresi `320`, uzunluk `64` olan tam snapshot okumasını kabul eder.
 Diğer adres/uzunluklar ve bütün yazma fonksiyonları exception ile reddedilir.
+Ethernet link/IP olayları ile Modbus bağlantı, istek, exception, timeout ve
+transport hata sayaçları 10 saniyelik sağlık logunda raporlanır. SBUS ana
+işlem hattı task-watchdog tarafından izlenir; sessiz kalan TCP istemcisi iki
+saniye sonra kapatılır.
 
 ## Donanım profili
 

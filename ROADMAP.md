@@ -60,12 +60,12 @@ Bu aşamaya Aşama 1 testleri geçmeden başlanmaz.
 - [x] GR01 üzerinde doğrulanmış inverted RX yapılandırması
 - [ ] UART hata ve byte-gap tanıları
 - [x] ESP32-ETH01 v1.4 LAN8720 Ethernet PHY/pin yapılandırması
-- [ ] Ethernet link ve DHCP davranışının gerçek kartta doğrulanması
+- [x] Ethernet link ve statik IPv4 davranışının gerçek kartta doğrulanması
 - [x] Masa testi için statik `192.168.144.166/24` ağ profili
 - [ ] Statik/DHCP ağ ayarlarının build-time yapılandırılabilir tutulması
 - [x] Yalnız FC03 ve yalnız 64-register bloğunu sunan Modbus TCP sunucusu
 - [x] Tüm Modbus yazma fonksiyonlarının reddedilmesi
-- [ ] Client, Ethernet ve watchdog tanıları
+- [x] Client, Ethernet ve watchdog tanıları
 - [ ] Çalışma yolunda dinamik bellek ve uzun bloklayan çağrı denetimi
 
 ## Aşama 3 — Masa ve entegrasyon testleri

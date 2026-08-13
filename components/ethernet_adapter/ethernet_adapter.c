@@ -25,10 +25,15 @@ enum {
 static SemaphoreHandle_t status_mutex;
 static struct rover_ethernet_status status;
 
-static void set_link_status(bool link_up)
+static void record_link_status(bool link_up)
 {
     if (xSemaphoreTake(status_mutex, portMAX_DELAY) == pdTRUE) {
         status.link_up = link_up;
+        if (link_up) {
+            ++status.link_up_count;
+        } else {
+            ++status.link_down_count;
+        }
         if (!link_up) {
             status.has_ipv4 = false;
             status.ipv4.addr = 0;
@@ -46,18 +51,18 @@ static void on_ethernet_event(void *arg, esp_event_base_t event_base,
 
     switch (event_id) {
     case ETHERNET_EVENT_CONNECTED:
-        set_link_status(true);
-        ESP_LOGI(TAG, "link up; waiting for DHCP");
+        record_link_status(true);
+        ESP_LOGI(TAG, "link up; applying static IPv4");
         break;
     case ETHERNET_EVENT_DISCONNECTED:
-        set_link_status(false);
+        record_link_status(false);
         ESP_LOGW(TAG, "link down");
         break;
     case ETHERNET_EVENT_START:
         ESP_LOGI(TAG, "interface started");
         break;
     case ETHERNET_EVENT_STOP:
-        set_link_status(false);
+        record_link_status(false);
         ESP_LOGI(TAG, "interface stopped");
         break;
     default:
@@ -77,10 +82,11 @@ static void on_got_ipv4(void *arg, esp_event_base_t event_base,
         status.link_up = true;
         status.has_ipv4 = true;
         status.ipv4 = event->ip_info.ip;
+        ++status.ipv4_ready_count;
         xSemaphoreGive(status_mutex);
     }
 
-    ESP_LOGI(TAG, "DHCP address=" IPSTR " gateway=" IPSTR " netmask=" IPSTR,
+    ESP_LOGI(TAG, "IPv4 ready: address=" IPSTR " gateway=" IPSTR " netmask=" IPSTR,
              IP2STR(&event->ip_info.ip), IP2STR(&event->ip_info.gw),
              IP2STR(&event->ip_info.netmask));
 }

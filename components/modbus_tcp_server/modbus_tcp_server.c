@@ -12,6 +12,8 @@
 #include "register_snapshot.h"
 
 static const char *TAG = "g16_modbus";
+static portMUX_TYPE status_lock = portMUX_INITIALIZER_UNLOCKED;
+static struct rover_modbus_tcp_status status;
 enum {
     MODBUS_TCP_PORT = 502, MODBUS_UNIT_ID = 1, MODBUS_FC_READ_HOLDING = 3,
     MODBUS_EXCEPTION_ILLEGAL_FUNCTION = 1, MODBUS_EXCEPTION_ILLEGAL_ADDRESS = 2,
@@ -19,26 +21,87 @@ enum {
     MODBUS_REQUEST_PDU_SIZE = 5, MODBUS_MAX_ADU_SIZE = 260,
 };
 
-static bool recv_all(int fd, uint8_t *buffer, size_t length)
+enum io_result {
+    IO_OK,
+    IO_CLOSED,
+    IO_TIMEOUT,
+    IO_ERROR,
+};
+
+static void record_client_connected(bool connected)
+{
+    taskENTER_CRITICAL(&status_lock);
+    status.client_connected = connected;
+    if (connected) {
+        ++status.client_connections;
+    }
+    taskEXIT_CRITICAL(&status_lock);
+}
+
+static void record_request(bool exception)
+{
+    taskENTER_CRITICAL(&status_lock);
+    ++status.requests;
+    if (exception) {
+        ++status.exceptions;
+    } else {
+        ++status.successful_reads;
+    }
+    taskEXIT_CRITICAL(&status_lock);
+}
+
+static void record_io_result(enum io_result result)
+{
+    taskENTER_CRITICAL(&status_lock);
+    if (result == IO_TIMEOUT) {
+        ++status.timeouts;
+    } else if (result == IO_ERROR) {
+        ++status.transport_errors;
+    }
+    taskEXIT_CRITICAL(&status_lock);
+}
+
+struct rover_modbus_tcp_status rover_modbus_tcp_server_get_status(void)
+{
+    struct rover_modbus_tcp_status copy;
+    taskENTER_CRITICAL(&status_lock);
+    copy = status;
+    taskEXIT_CRITICAL(&status_lock);
+    return copy;
+}
+
+static enum io_result recv_all(int fd, uint8_t *buffer, size_t length)
 {
     size_t done = 0;
     while (done < length) {
         const int count = recv(fd, buffer + done, length - done, 0);
-        if (count <= 0) return false;
+        if (count == 0) {
+            return IO_CLOSED;
+        }
+        if (count < 0) {
+            return errno == EAGAIN || errno == EWOULDBLOCK ? IO_TIMEOUT
+                                                           : IO_ERROR;
+        }
         done += (size_t)count;
     }
-    return true;
+    return IO_OK;
 }
 
-static bool send_all(int fd, const uint8_t *buffer, size_t length)
+static enum io_result send_all(int fd, const uint8_t *buffer, size_t length)
 {
     size_t done = 0;
     while (done < length) {
         const int count = send(fd, buffer + done, length - done, 0);
-        if (count <= 0) return false;
+        if (count == 0) {
+            return IO_CLOSED;
+        }
+        if (count < 0) {
+            return errno == EAGAIN || errno == EWOULDBLOCK ? IO_TIMEOUT
+                                                           : IO_ERROR;
+        }
         done += (size_t)count;
     }
-    return true;
+    return IO_OK;
 }
 
 static size_t make_exception(uint8_t *response, const uint8_t *request,
@@ -86,14 +149,31 @@ static size_t handle_request(const uint8_t *request, size_t request_length,
 static void serve_client(int fd)
 {
     uint8_t request[MODBUS_MAX_ADU_SIZE], response[MODBUS_MAX_ADU_SIZE];
-    while (recv_all(fd, request, MODBUS_MBAP_SIZE)) {
+    while (true) {
+        enum io_result result = recv_all(fd, request, MODBUS_MBAP_SIZE);
+        if (result != IO_OK) {
+            record_io_result(result);
+            break;
+        }
         const uint16_t length = ((uint16_t)request[4] << 8) | request[5];
-        if (length < 2 || length > MODBUS_MAX_ADU_SIZE - 6) break;
+        if (length < 2 || length > MODBUS_MAX_ADU_SIZE - 6) {
+            record_io_result(IO_ERROR);
+            break;
+        }
         const size_t remaining = (size_t)length - 1;
-        if (!recv_all(fd, request + MODBUS_MBAP_SIZE, remaining)) break;
+        result = recv_all(fd, request + MODBUS_MBAP_SIZE, remaining);
+        if (result != IO_OK) {
+            record_io_result(result);
+            break;
+        }
         const size_t response_length = handle_request(
             request, MODBUS_MBAP_SIZE + remaining, response);
-        if (!send_all(fd, response, response_length)) break;
+        record_request((response[7] & UINT8_C(0x80)) != 0);
+        result = send_all(fd, response, response_length);
+        if (result != IO_OK) {
+            record_io_result(result);
+            break;
+        }
     }
 }
 
@@ -102,7 +182,11 @@ static void server_task(void *argument)
     (void)argument;
     while (true) {
         const int listen_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
-        if (listen_fd < 0) { vTaskDelay(pdMS_TO_TICKS(1000)); continue; }
+        if (listen_fd < 0) {
+            record_io_result(IO_ERROR);
+            vTaskDelay(pdMS_TO_TICKS(1000));
+            continue;
+        }
         const int enable = 1;
         setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable));
         const struct sockaddr_in address = {
@@ -111,6 +195,7 @@ static void server_task(void *argument)
         };
         if (bind(listen_fd, (const struct sockaddr *)&address, sizeof(address)) != 0 ||
             listen(listen_fd, 1) != 0) {
+            record_io_result(IO_ERROR);
             ESP_LOGE(TAG, "bind/listen failed: errno=%d", errno);
             close(listen_fd); vTaskDelay(pdMS_TO_TICKS(1000)); continue;
         }
@@ -118,10 +203,23 @@ static void server_task(void *argument)
         while (true) {
             struct sockaddr_storage source; socklen_t source_length = sizeof(source);
             const int client_fd = accept(listen_fd, (struct sockaddr *)&source, &source_length);
-            if (client_fd < 0) break;
+            if (client_fd < 0) {
+                record_io_result(IO_ERROR);
+                break;
+            }
+            const struct timeval timeout = {
+                .tv_sec = 2,
+                .tv_usec = 0,
+            };
+            setsockopt(client_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout,
+                       sizeof(timeout));
+            setsockopt(client_fd, SOL_SOCKET, SO_SNDTIMEO, &timeout,
+                       sizeof(timeout));
+            record_client_connected(true);
             ESP_LOGI(TAG, "client connected");
             serve_client(client_fd);
             shutdown(client_fd, SHUT_RDWR); close(client_fd);
+            record_client_connected(false);
             ESP_LOGI(TAG, "client disconnected");
         }
         close(listen_fd);

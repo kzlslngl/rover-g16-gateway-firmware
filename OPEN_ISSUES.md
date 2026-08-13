@@ -49,3 +49,26 @@ resetlerinde `boot=2 / session=1ce9fb56` ve ardından
 `boot=3 / session=6c1cf188` gözlendi; snapshot sequence her iki boot'ta da
 1'den başladı. NVS okunamadığında veya commit edilemediğinde firmware sessizce
 devam etmek yerine fail-fast davranır.
+
+## OI-004 — FC03 alt-aralık okuma politikası
+
+**Durum:** Ana proje kararı gerekli.
+
+Mevcut firmware yalnız absolute başlangıç `320`, quantity `64` olan tam snapshot
+okumasını kabul eder. Sözleşme `320..383` içindeki kısmi FC03 okumalarının
+kabul edilip edilmeyeceğini kesinleştirmelidir. Karar gelene kadar firmware
+güvenli tarafta yalnız tam blok okumasını kabul eder.
+
+## OI-005 — Production deployment ve PLC zaman değerleri
+
+**Durum:** Ana proje/deployment kararı gerekli.
+
+Masa testi için ESP `192.168.144.166/24`, geliştirici PC'si
+`192.168.144.10/24` kullanılarak doğrulandı. Production için aşağıdakiler ana
+proje/deployment konfigürasyonunda verilmelidir:
+
+- PLC ve ESP IPv4/subnet/VLAN değerleri ile izin verilen PLC client IP'si;
+- PLC poll periyodu ve response timeout'u;
+- stale/session değişimi sonrası neutral/re-arm süreleri;
+- production watchdog süresi ve log seviyesi;
+- firmware'in referans alacağı güncel ana sözleşme commit SHA'sı.

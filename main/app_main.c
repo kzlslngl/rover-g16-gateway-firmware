@@ -7,6 +7,7 @@
 #include "esp_log.h"
 #include "esp_mac.h"
 #include "esp_random.h"
+#include "esp_task_wdt.h"
 #include "esp_timer.h"
 #include "ethernet_adapter.h"
 #include "nvs.h"
@@ -35,6 +36,37 @@ enum {
 static uint64_t monotonic_us(void)
 {
     return (uint64_t)esp_timer_get_time();
+}
+
+static void service_runtime_diagnostics(esp_task_wdt_user_handle_t watchdog,
+                                        uint64_t now_us)
+{
+    ESP_ERROR_CHECK(esp_task_wdt_reset_user(watchdog));
+
+    static uint64_t last_log_us;
+    if (last_log_us != 0 && now_us - last_log_us < UINT64_C(10000000)) {
+        return;
+    }
+    last_log_us = now_us;
+
+    const struct rover_ethernet_status ethernet =
+        rover_ethernet_get_status();
+    const struct rover_modbus_tcp_status modbus =
+        rover_modbus_tcp_server_get_status();
+    ESP_LOGI(TAG,
+             "health eth=%s ip=%s link_up=%" PRIu32
+             " link_down=%" PRIu32 " ip_ready=%" PRIu32
+             " client=%s connects=%" PRIu32 " requests=%" PRIu32
+             " reads=%" PRIu32 " exceptions=%" PRIu32
+             " timeouts=%" PRIu32 " transport_errors=%" PRIu32,
+             ethernet.link_up ? "up" : "down",
+             ethernet.has_ipv4 ? "ready" : "none",
+             ethernet.link_up_count, ethernet.link_down_count,
+             ethernet.ipv4_ready_count,
+             modbus.client_connected ? "yes" : "no",
+             modbus.client_connections, modbus.requests,
+             modbus.successful_reads, modbus.exceptions,
+             modbus.timeouts, modbus.transport_errors);
 }
 
 static uint32_t next_boot_counter(void)
@@ -164,6 +196,8 @@ void app_main(void)
     rover_register_snapshot_publish(active_registers);
     ESP_ERROR_CHECK(rover_ethernet_start());
     ESP_ERROR_CHECK(rover_modbus_tcp_server_start());
+    esp_task_wdt_user_handle_t watchdog;
+    ESP_ERROR_CHECK(esp_task_wdt_add_user("sbus_pipeline", &watchdog));
 
     ESP_LOGI(TAG,
              "SBUS RX ready: UART%d GPIO%d 100000 8E2 inverted, footer=0x00, "
@@ -175,6 +209,7 @@ void app_main(void)
     uint32_t rejected_count = 0;
 
     while (true) {
+        service_runtime_diagnostics(watchdog, monotonic_us());
         const int length = uart_read_bytes(SBUS_UART, bytes, sizeof(bytes),
                                            pdMS_TO_TICKS(20));
         if (length <= 0) {

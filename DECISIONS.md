@@ -469,7 +469,8 @@ ESP Firmware Codex'i:
 - donanım ölçüm kapıları kapanmadan inversion, PHY/pin veya elektriksel profil
   gibi değerleri production varsayımı olarak sabitlemez.
 
-**Güncel geliştirme aşaması:** Aşama 1 — kart gerektirmeyen güvenli çekirdek.
+**Güncel geliştirme aşaması:** Aşama 2 tamamlandı; Aşama 3 masa/PLC/HIL
+entegrasyonuna hazır.
 
 Tamamlanan temel:
 
@@ -501,15 +502,24 @@ Tamamlanan temel:
   sabitlendi; UART görev/log gecikmesi kaynaklı aykırı örnekler reddedilir;
 - NVS boot sayacı ardışık resetlerde 2'den 3'e ilerledi, session ID değişti ve
   snapshot sequence her boot'ta yeniden 1'den başladı.
+- LAN8720 RMII linki ve `192.168.144.166/24` masa profili gerçek kartta
+  doğrulandı;
+- salt-okunur Modbus TCP sunucusu FC03 ile 64 register döndürdü; begin/end
+  sequence ve CRC doğrulandı, FC06 yazma isteği reddedildi;
+- atomik snapshot kopyası, Ethernet/Modbus tanı sayaçları, iki saniyelik
+  sessiz-client timeout'u ve SBUS task-watchdog gözetimi doğrulandı.
 
 Sıradaki eksikler, özetle:
 
-1. görevler arası kritik bölümle atomik active snapshot değişimi;
-2. ana sözleşmeden tam 64-register known-result test vektörü;
-3. biçim ve statik analiz komutlarının belgelenmesi;
-4. Ethernet PHY adaptörü ve salt-okunur Modbus FC03 sunucusu;
-5. production öncesinde elektriksel ölçümler, kesin kart profili ve PLC/HIL
-   entegrasyon testleri.
+1. ana sözleşmeden tam 64-register known-result test vektörü ve CRC/sequence
+   sırası onayı;
+2. FC03 alt-aralık politikasının ve production deployment değerlerinin ana
+   proje tarafından kesinleştirilmesi;
+3. UART hata olayları, biçim/statik analiz ve dinamik bellek/bloklama denetimi;
+4. lost/failsafe/stale/reboot/Ethernet-kopma hata enjeksiyonları;
+5. PLC/HIL üzerinde session/CRC/stale reddi, neutral/re-arm ve manuel yol
+   entegrasyon testleri;
+6. production öncesi elektriksel ölçümler ve aktif buffer/izolasyon kararı.
 
 Ayrıntılı ve güncel iş listesi için `ROADMAP.md` kullanılır. Ana Proje Codex'i
 sonraki denetimlerde bu bölüm, `ROADMAP.md`, Git diff'i ve build/test kanıtlarını
