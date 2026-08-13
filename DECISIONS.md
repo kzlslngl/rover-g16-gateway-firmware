@@ -536,3 +536,11 @@ birlikte değerlendirir.
 heartbeat yeniden başlayıp ilerledi; SBUS frame akışı, CRC ve begin/end sequence
 kontrolleri geçti. Eski session snapshot'ının reddi PLC authority/fail-safe
 mantığının HIL kabul testi olarak açık kalır.
+
+13 Ağustos 2026 Ethernet recovery testinde kablo çıkarıldığında üç ping isteği
+yanıtsız kaldı ve Modbus TCP bağlantısı üç saniyelik client timeout'u ile
+kapandı. Kablo yeniden takıldığında gateway aynı `192.168.2.166` adresinde
+erişilebilir oldu; beş ping isteğinin tamamı yanıtlandı ve FC03 snapshot testi
+geçti. Session ID `0x8AE58A4C` olarak değişmeden kaldı; heartbeat ve SBUS frame
+sayacı ilerledi, CRC/begin-end sequence bütünlüğü korundu. Gerçek PLC poll
+kesme/reconnect politikası PLC/HIL testine açık bırakıldı.

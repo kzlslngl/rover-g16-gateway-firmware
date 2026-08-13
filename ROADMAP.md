@@ -76,7 +76,8 @@ Bu aşamaya Aşama 1 testleri geçmeden başlanmaz.
 - [x] ESP reboot/session değişimi ve yeni snapshot bütünlüğü
 - [ ] PLC/HIL üzerinde eski session snapshot reddi
 - [ ] CRC/endian sonuçlarının ana ROS sözleşmesiyle karşılaştırılması
-- [ ] Ethernet kopması ve PLC poll kesilmesi
+- [x] Ethernet kablosu kopması ve link sonrası Modbus recovery
+- [ ] PLC poll kesilmesi ve yeniden bağlanma davranışı
 - [ ] Orin kapalıyken G16 → ESP → PLC manuel yol testi
 - [ ] ESP arızasında stale verinin aktüatörlere uygulanmadığının doğrulanması
 
