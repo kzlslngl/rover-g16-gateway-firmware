@@ -42,6 +42,10 @@ Kanal anlamlandırma, kalibrasyon, manuel kontrol yetkisi ve nihai fail-safe
 kararı PLC'ye aittir. ESP arızası veya stale veri güvenli tarafta geçersiz
 veri üretmelidir.
 
+Modbus TCP sunucusu `192.168.144.166:502`, unit ID `1` üzerinde yalnızca FC03
+ile başlangıç adresi `320`, uzunluk `64` olan tam snapshot okumasını kabul eder.
+Diğer adres/uzunluklar ve bütün yazma fonksiyonları exception ile reddedilir.
+
 ## Donanım profili
 
 | Bileşen | Değer |
@@ -52,7 +56,10 @@ veri üretmelidir.
 | UART | 100000 baud, 8E2 |
 | SBUS frame | 25 byte |
 | Kanal verisi | 16 x 11-bit ham değer |
-| Ağ | Kablolu Ethernet |
+| Ağ | LAN8720 RMII, statik `192.168.144.166/24` |
+| Ethernet PHY | adres 1, reset/power GPIO16 |
+| Ethernet yönetim | MDC GPIO23, MDIO GPIO18 |
+| RMII saat | GPIO0 input |
 | Modbus unit ID | 1 |
 
 Elektriksel bağlantıdan önce GR01 çıkış voltajı ve idle polaritesi osiloskopla

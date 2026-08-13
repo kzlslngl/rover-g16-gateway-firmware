@@ -8,13 +8,16 @@
 #include "esp_mac.h"
 #include "esp_random.h"
 #include "esp_timer.h"
+#include "ethernet_adapter.h"
 #include "nvs.h"
 #include "nvs_flash.h"
 
 #include "freshness.h"
+#include "modbus_tcp_server.h"
 #include "protocol_version.h"
 #include "register_endian.h"
 #include "register_image.h"
+#include "register_snapshot.h"
 #include "sbus_decoder.h"
 #include "session_id.h"
 
@@ -150,6 +153,18 @@ void app_main(void)
                         : ESP_ERR_INVALID_STATE);
     uint16_t active_registers[ROVER_G16_REGISTER_COUNT];
 
+    const uint64_t initial_now_us = monotonic_us();
+    rover_freshness_make_view(&freshness_state, initial_now_us,
+                              SBUS_STALE_TIMEOUT_MS, &freshness_view);
+    ESP_ERROR_CHECK(rover_register_image_build(
+                        &image_state, &freshness_view,
+                        (uint32_t)(initial_now_us / 1000u), active_registers)
+                        ? ESP_OK
+                        : ESP_ERR_INVALID_STATE);
+    rover_register_snapshot_publish(active_registers);
+    ESP_ERROR_CHECK(rover_ethernet_start());
+    ESP_ERROR_CHECK(rover_modbus_tcp_server_start());
+
     ESP_LOGI(TAG,
              "SBUS RX ready: UART%d GPIO%d 100000 8E2 inverted, footer=0x00, "
              "boot=%" PRIu32 " session=%08" PRIx32,
@@ -187,6 +202,7 @@ void app_main(void)
                                     active_registers)
                                     ? ESP_OK
                                     : ESP_ERR_INVALID_STATE);
+                rover_register_snapshot_publish(active_registers);
                 if (frame_count <= 10 || frame_count % 25 == 0) {
                     log_sbus_frame(&frame, &freshness_view,
                                    active_registers, frame_count);

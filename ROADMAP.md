@@ -40,7 +40,7 @@ bağımsız değiştirilmez.
 - [x] Boot başına değişen `gateway_session_id`
 - [x] Heartbeat ve sequence yönetimi
 - [x] Register 320–379 üzerinden CRC üretimi
-- [ ] Aynı begin/end sequence ile atomik aktif görüntü değişimi
+- [x] Aynı begin/end sequence ile atomik aktif görüntü değişimi
 - [ ] Protokol test vektörleriyle birebir karşılaştırma
 - [ ] Reboot, eski snapshot ve bozuk CRC testleri
 
@@ -59,10 +59,12 @@ Bu aşamaya Aşama 1 testleri geçmeden başlanmaz.
 - [x] GPIO35 RX-only UART, 100000 baud ve 8E2 adaptörü
 - [x] GR01 üzerinde doğrulanmış inverted RX yapılandırması
 - [ ] UART hata ve byte-gap tanıları
-- [ ] Kesin kart varyantına uygun Ethernet PHY/pin yapılandırması
-- [ ] Statik/DHCP ağ ayarlarının yapılandırılabilir tutulması
-- [ ] Yalnız FC03 ve yalnız 64-register bloğunu sunan Modbus TCP sunucusu
-- [ ] Tüm Modbus yazma fonksiyonlarının reddedilmesi
+- [x] ESP32-ETH01 v1.4 LAN8720 Ethernet PHY/pin yapılandırması
+- [ ] Ethernet link ve DHCP davranışının gerçek kartta doğrulanması
+- [x] Masa testi için statik `192.168.144.166/24` ağ profili
+- [ ] Statik/DHCP ağ ayarlarının build-time yapılandırılabilir tutulması
+- [x] Yalnız FC03 ve yalnız 64-register bloğunu sunan Modbus TCP sunucusu
+- [x] Tüm Modbus yazma fonksiyonlarının reddedilmesi
 - [ ] Client, Ethernet ve watchdog tanıları
 - [ ] Çalışma yolunda dinamik bellek ve uzun bloklayan çağrı denetimi
 
@@ -87,5 +89,6 @@ Bu aşamaya Aşama 1 testleri geçmeden başlanmaz.
 
 ## Sıradaki geliştirme dilimi
 
-Bir sonraki değişiklik yalnızca saf SBUS decoder ve host testlerini kapsamalıdır.
-UART, Ethernet ve Modbus kodu bu decoder testleri geçmeden eklenmemelidir.
+LAN8720 link ve DHCP alımı gerçek kartta doğrulanmalıdır. Ardından aktif register
+görüntüsü eşzamanlı erişime uygun hâle getirilerek salt-okunur Modbus TCP FC03
+sunucusuna bağlanmalıdır.
