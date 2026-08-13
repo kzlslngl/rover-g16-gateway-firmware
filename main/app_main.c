@@ -29,9 +29,13 @@ enum {
     SBUS_RX_GPIO = GPIO_NUM_35,
     SBUS_BAUD_RATE = 100000,
     SBUS_RX_BUFFER_SIZE = 512,
-    SBUS_READ_BUFFER_SIZE = 128,
+    SBUS_READ_BUFFER_SIZE = 512,
     SBUS_STALE_TIMEOUT_MS = 100,
+    SNAPSHOT_PUBLISH_PERIOD_MS = 20,
+    SBUS_EVENT_QUEUE_SIZE = 20,
 };
+
+static QueueHandle_t sbus_event_queue;
 
 static uint64_t monotonic_us(void)
 {
@@ -116,7 +120,8 @@ static esp_err_t sbus_uart_init(void)
     };
 
     ESP_RETURN_ON_ERROR(uart_driver_install(SBUS_UART, SBUS_RX_BUFFER_SIZE, 0,
-                                            0, NULL, 0),
+                                            SBUS_EVENT_QUEUE_SIZE,
+                                            &sbus_event_queue, 0),
                         TAG, "UART driver install failed");
     ESP_RETURN_ON_ERROR(uart_param_config(SBUS_UART, &uart_config), TAG,
                         "UART configuration failed");
@@ -207,49 +212,85 @@ void app_main(void)
     uint8_t bytes[SBUS_READ_BUFFER_SIZE];
     uint32_t frame_count = 0;
     uint32_t rejected_count = 0;
+    uint64_t last_snapshot_us = initial_now_us;
 
     while (true) {
-        service_runtime_diagnostics(watchdog, monotonic_us());
-        const int length = uart_read_bytes(SBUS_UART, bytes, sizeof(bytes),
-                                           pdMS_TO_TICKS(20));
-        if (length <= 0) {
+        const uint64_t loop_now_us = monotonic_us();
+        service_runtime_diagnostics(watchdog, loop_now_us);
+        uart_event_t uart_event;
+        const bool has_event = xQueueReceive(sbus_event_queue, &uart_event,
+                                              pdMS_TO_TICKS(20)) == pdTRUE;
+        int length = 0;
+        if (has_event && uart_event.type == UART_DATA) {
+            const size_t requested = uart_event.size < sizeof(bytes)
+                                         ? uart_event.size
+                                         : sizeof(bytes);
+            length = uart_read_bytes(SBUS_UART, bytes, requested, 0);
+        } else if (has_event &&
+                   (uart_event.type == UART_PARITY_ERR ||
+                    uart_event.type == UART_FRAME_ERR)) {
+            rover_freshness_record_invalid(&freshness_state);
+            rover_sbus_parser_init(&parser, &sbus_config);
+            ESP_LOGW(TAG, "UART line error type=%d", uart_event.type);
+        } else if (has_event &&
+                   (uart_event.type == UART_FIFO_OVF ||
+                    uart_event.type == UART_BUFFER_FULL)) {
+            rover_freshness_record_invalid(&freshness_state);
+            rover_freshness_set_fault(&freshness_state, true);
+            uart_flush_input(SBUS_UART);
+            xQueueReset(sbus_event_queue);
+            rover_sbus_parser_init(&parser, &sbus_config);
+            ESP_LOGE(TAG, "UART overflow type=%d; parser reset",
+                     uart_event.type);
+        }
+
+        if (!has_event) {
             if (rover_sbus_parser_on_gap(&parser)) {
                 rover_freshness_record_invalid(&freshness_state);
             }
-            continue;
-        }
-
-        for (int index = 0; index < length; ++index) {
-            struct rover_sbus_frame frame;
-            const enum rover_sbus_parser_event event =
-                rover_sbus_parser_push(&parser, bytes[index], &frame);
-            if (event == ROVER_SBUS_PARSER_FRAME) {
-                ++frame_count;
-                const uint64_t now_us = monotonic_us();
-                rover_freshness_record_frame(&freshness_state, &frame,
-                                              now_us);
-                rover_freshness_make_view(&freshness_state, now_us,
-                                           SBUS_STALE_TIMEOUT_MS,
-                                           &freshness_view);
-                ESP_ERROR_CHECK(rover_register_image_build(
-                                    &image_state, &freshness_view,
-                                    (uint32_t)(now_us / 1000u),
-                                    active_registers)
-                                    ? ESP_OK
-                                    : ESP_ERR_INVALID_STATE);
-                rover_register_snapshot_publish(active_registers);
-                if (frame_count <= 10 || frame_count % 25 == 0) {
-                    log_sbus_frame(&frame, &freshness_view,
-                                   active_registers, frame_count);
-                }
-            } else if (event == ROVER_SBUS_PARSER_REJECTED) {
-                ++rejected_count;
-                rover_freshness_record_invalid(&freshness_state);
-                if (rejected_count <= 5 || rejected_count % 100 == 0) {
-                    ESP_LOGW(TAG, "rejected SBUS frames: %" PRIu32,
-                             rejected_count);
+        } else if (length > 0) {
+            for (int index = 0; index < length; ++index) {
+                struct rover_sbus_frame frame;
+                const enum rover_sbus_parser_event event =
+                    rover_sbus_parser_push(&parser, bytes[index], &frame);
+                if (event == ROVER_SBUS_PARSER_FRAME) {
+                    ++frame_count;
+                    const uint64_t frame_now_us = monotonic_us();
+                    rover_freshness_record_frame(&freshness_state, &frame,
+                                                  frame_now_us);
+                    rover_freshness_set_fault(&freshness_state, false);
+                    if (frame_count <= 10 || frame_count % 25 == 0) {
+                        rover_freshness_make_view(
+                            &freshness_state, frame_now_us,
+                            SBUS_STALE_TIMEOUT_MS, &freshness_view);
+                        log_sbus_frame(&frame, &freshness_view,
+                                       active_registers, frame_count);
+                    }
+                } else if (event == ROVER_SBUS_PARSER_REJECTED) {
+                    ++rejected_count;
+                    rover_freshness_record_invalid(&freshness_state);
+                    if (rejected_count <= 5 || rejected_count % 100 == 0) {
+                        ESP_LOGW(TAG, "rejected SBUS frames: %" PRIu32,
+                                 rejected_count);
+                    }
                 }
             }
+        }
+
+        const uint64_t publish_now_us = monotonic_us();
+        if (publish_now_us - last_snapshot_us >=
+            (uint64_t)SNAPSHOT_PUBLISH_PERIOD_MS * 1000u) {
+            rover_freshness_make_view(&freshness_state, publish_now_us,
+                                       SBUS_STALE_TIMEOUT_MS,
+                                       &freshness_view);
+            ESP_ERROR_CHECK(rover_register_image_build(
+                                &image_state, &freshness_view,
+                                (uint32_t)(publish_now_us / 1000u),
+                                active_registers)
+                                ? ESP_OK
+                                : ESP_ERR_INVALID_STATE);
+            rover_register_snapshot_publish(active_registers);
+            last_snapshot_us = publish_now_us;
         }
     }
 }

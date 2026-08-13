@@ -320,6 +320,41 @@ static void test_register_image_valid_channels_and_progress(void)
     assert(rover_register_read_u32(registers, ROVER_G16_REG_HEARTBEAT) == 2);
 }
 
+static void test_authoritative_full_snapshot_vector(void)
+{
+    static const uint16_t expected[ROVER_G16_REGISTER_COUNT] = {
+        0x4547, 0x0001, 0x0001, 0x0040, 0x0102, 0x0304, 0xA1B2, 0xC3D4,
+        0x0000, 0x0010, 0x0000, 0x0020, 0x0012, 0x3456, 0x0019, 0x0009,
+        0x0010, 0xFFFF, 0x0000, 0x0001, 0x00AC, 0x03E0, 0x0713, 0x07FF,
+        0x0064, 0x00C8, 0x012C, 0x0190, 0x01F4, 0x0258, 0x02BC, 0x0320,
+        0x0384, 0x03E8, 0x0000, 0x36B0, 0x0000, 0x0002, 0x0000, 0x0003,
+        0x0000, 0x0004, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+        0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+        0x0000, 0x0000, 0x0000, 0x0000, 0x1274, 0x9618, 0x0102, 0x0304,
+    };
+    const struct rover_freshness_view view = {
+        .channels = {0, 1, 172, 992, 1811, 2047, 100, 200,
+                     300, 400, 500, 600, 700, 800, 900, 1000},
+        .channel_valid_mask = UINT16_MAX,
+        .frame_age_ms = 25,
+        .sbus_flags = 0x0009,
+        .sbus_frame_counter = 0x20,
+        .frame_period_us = 14000,
+        .invalid_frame_count = 2,
+        .frame_lost_count = 3,
+        .failsafe_count = 4,
+    };
+    struct rover_register_image_state state = {
+        .gateway_session_id = UINT32_C(0xA1B2C3D4),
+        .gateway_heartbeat = 15,
+        .sequence = UINT32_C(0x01020303),
+    };
+    uint16_t registers[ROVER_G16_REGISTER_COUNT];
+    assert(rover_register_image_build(&state, &view, UINT32_C(0x00123456),
+                                      registers));
+    assert(memcmp(registers, expected, sizeof(expected)) == 0);
+}
+
 static void test_session_id_is_deterministic_and_input_sensitive(void)
 {
     const uint64_t device_id = UINT64_C(0xAABBCCDDEEFF);
@@ -353,6 +388,7 @@ int main(void)
     test_freshness_rejects_scheduler_delay_outlier();
     test_register_image_boot_and_crc();
     test_register_image_valid_channels_and_progress();
+    test_authoritative_full_snapshot_vector();
     test_session_id_is_deterministic_and_input_sensitive();
     puts("core tests passed");
     return 0;

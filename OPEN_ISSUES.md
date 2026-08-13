@@ -145,8 +145,8 @@ ve aktüatör entegrasyon kapısını kapalı tutar.
 
 ## OI-006 — SBUS kesildiğinde stale snapshot yayımlanması
 
-**Durum:** Kritik uyumluluk bulgusu; firmware düzeltmesi ve hata enjeksiyon
-kanıtı gerekli.
+**Durum:** Çözüldü; firmware düzeltmesi ve gerçek kart stale/recovery testi
+doğrulandı.
 
 Güncel runtime yalnız yeni bir yapısal SBUS frame geldiğinde freshness view ve
 64-register snapshot üretir. SBUS byte akışı tamamen durursa son Modbus
@@ -178,9 +178,17 @@ Kabul kanıtı:
 4. gateway heartbeat ilerler, SBUS frame counter sabit kalır;
 5. PLC aynı veriyi MANUAL adayı olarak reddeder.
 
+13 Ağustos 2026 kart testinde SBUS sinyal hattı kesildiğinde sequence ve
+heartbeat ilerlemeye devam etti, SBUS frame counter sabit kaldı, frame age
+ilerledi, `FRAME_VALID` ve kanal maskesi kapandı. Hat yeniden bağlandığında
+yalnız yeni tam frame sonrasında frame counter ilerledi, age `0 ms`, flags
+`0x0009` ve kanal maskesi geçerli duruma döndü. FC03 CRC/sequence kontrolleri
+her iki durumda da geçti.
+
 ## OI-007 — UART parity/framing/overflow hata görünürlüğü
 
-**Durum:** Önemli uyumluluk bulgusu; firmware tanı entegrasyonu gerekli.
+**Durum:** Firmware tanı entegrasyonu tamamlandı; elektriksel/driver hata
+enjeksiyon kanıtı bekleniyor.
 
 Güncel UART driver event queue olmadan kurulmuştur. Parser yapısal
 header/footer/gap reddini sayar; fakat UART parity error, framing error,
@@ -200,3 +208,9 @@ Gerekli davranış:
 
 Kabul kanıtı UART hata enjeksiyonu veya eşdeğer driver-event testiyle
 sunulmalıdır.
+
+Firmware UART event queue üzerinden parity, framing, FIFO overflow ve buffer
+full olaylarını işler. Line error bir invalid olay kaydeder ve parser'ı
+sıfırlar. Overflow/buffer-full ayrıca decoder fault üretir, UART girişini ve
+event queue'yu temizler; yeni tam frame sonrası fault kapanır. Build ve normal
+SBUS recovery doğrulandı, fakat gerçek hata olayı henüz enjekte edilmedi.

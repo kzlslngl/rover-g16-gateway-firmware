@@ -41,7 +41,7 @@ bağımsız değiştirilmez.
 - [x] Heartbeat ve sequence yönetimi
 - [x] Register 320–379 üzerinden CRC üretimi
 - [x] Aynı begin/end sequence ile atomik aktif görüntü değişimi
-- [ ] Protokol test vektörleriyle birebir karşılaştırma
+- [x] Ana proje 64-register known-result vektörüyle birebir karşılaştırma
 - [ ] Reboot, eski snapshot ve bozuk CRC testleri
 
 ### Host doğrulama altyapısı
@@ -58,7 +58,7 @@ Bu aşamaya Aşama 1 testleri geçmeden başlanmaz.
 
 - [x] GPIO35 RX-only UART, 100000 baud ve 8E2 adaptörü
 - [x] GR01 üzerinde doğrulanmış inverted RX yapılandırması
-- [ ] UART hata ve byte-gap tanıları
+- [x] UART parity/framing/overflow ve byte-gap tanıları
 - [x] ESP32-ETH01 v1.4 LAN8720 Ethernet PHY/pin yapılandırması
 - [x] Ethernet link ve statik IPv4 davranışının gerçek kartta doğrulanması
 - [x] Masa testi için statik `192.168.144.166/24` ağ profili
