@@ -7,6 +7,11 @@ görüntüsü olarak sunan güvenlik odaklı gateway firmware'i.
 Bu depo firmware'in ROS 2 uygulamasından bağımsız geliştirilmesi içindir.
 Protokolün ana sözleşmesi `rover_core_ros2` deposundadır:
 
+Güncel işlevsel kapanış kararı, CI'da kalan tek test altyapısı problemi ve
+bakım/commissioning sınırı
+[`ESP_CLOSEOUT_REVIEW_2026-08-21.md`](ESP_CLOSEOUT_REVIEW_2026-08-21.md)
+belgesinde kayıtlıdır.
+
 - Referans commit: `66f6bde8b457ff8ef04ed045184f519dc34e5ef2`
 - Elektriksel profil: `rover_hardware/config/g16_gateway.yaml`
 - Register otoritesi: `rover_hardware/config/plc_protocol_v1.yaml`

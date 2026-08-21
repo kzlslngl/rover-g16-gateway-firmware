@@ -214,3 +214,19 @@ full olaylarını işler. Line error bir invalid olay kaydeder ve parser'ı
 sıfırlar. Overflow/buffer-full ayrıca decoder fault üretir, UART girişini ve
 event queue'yu temizler; yeni tam frame sonrası fault kapanır. Build ve normal
 SBUS recovery doğrulandı, fakat gerçek hata olayı henüz enjekte edilmedi.
+
+## OI-008 — Release profilinde host test assertion'larının kaldırılması
+
+**Durum:** Açık; işlevsel firmware kapanışından önce CI düzeltmesi gerekli.
+
+GitHub Actions `host-tests` işi CMake'i `Release` profiliyle yapılandırır.
+`test/core_tests.c` kontrolleri standart `assert(...)` kullandığı için
+`NDEBUG` altında assertion ifadeleri kaldırılır. Commit `404af0e` için build,
+assertion içinde kalan değişkenleri `-Werror` nedeniyle unused sayarak
+durmuştur. Aynı sorun yalnız uyarılar susturularak geçilirse test binary'si
+kontrol yapmadan başarılı görünebilir.
+
+Gerekli çözüm ve kabul kriteri
+[`ESP_CLOSEOUT_REVIEW_2026-08-21.md`](ESP_CLOSEOUT_REVIEW_2026-08-21.md)
+belgesinin 2. bölümündedir. `host-tests` ve `esp32-build` hem push hem PR
+çalıştırmasında yeşil olmadan draft PR `#1` ana dala alınmamalıdır.
