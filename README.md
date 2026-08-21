@@ -7,6 +7,11 @@ görüntüsü olarak sunan güvenlik odaklı gateway firmware'i.
 Bu depo firmware'in ROS 2 uygulamasından bağımsız geliştirilmesi içindir.
 Protokolün ana sözleşmesi `rover_core_ros2` deposundadır:
 
+Güncel işlevsel kapanış kararı, CI'da kalan tek test altyapısı problemi ve
+bakım/commissioning sınırı
+[`ESP_CLOSEOUT_REVIEW_2026-08-21.md`](ESP_CLOSEOUT_REVIEW_2026-08-21.md)
+belgesinde kayıtlıdır.
+
 - Referans commit: `66f6bde8b457ff8ef04ed045184f519dc34e5ef2`
 - Elektriksel profil: `rover_hardware/config/g16_gateway.yaml`
 - Register otoritesi: `rover_hardware/config/plc_protocol_v1.yaml`
@@ -42,6 +47,15 @@ Kanal anlamlandırma, kalibrasyon, manuel kontrol yetkisi ve nihai fail-safe
 kararı PLC'ye aittir. ESP arızası veya stale veri güvenli tarafta geçersiz
 veri üretmelidir.
 
+Modbus TCP sunucusu varsayılan bench profilinde `192.168.2.166:502`, unit ID
+`1` üzerinde yalnızca FC03
+ile başlangıç adresi `320`, uzunluk `64` olan tam snapshot okumasını kabul eder.
+Diğer adres/uzunluklar ve bütün yazma fonksiyonları exception ile reddedilir.
+Ethernet link/IP olayları ile Modbus bağlantı, istek, exception, timeout ve
+transport hata sayaçları 10 saniyelik sağlık logunda raporlanır. SBUS ana
+işlem hattı task-watchdog tarafından izlenir; sessiz kalan TCP istemcisi iki
+saniye sonra kapatılır.
+
 ## Donanım profili
 
 | Bileşen | Değer |
@@ -52,7 +66,10 @@ veri üretmelidir.
 | UART | 100000 baud, 8E2 |
 | SBUS frame | 25 byte |
 | Kanal verisi | 16 x 11-bit ham değer |
-| Ağ | Kablolu Ethernet |
+| Ağ | LAN8720 RMII, build-time yapılandırılabilir; bench `192.168.2.166/24` |
+| Ethernet PHY | adres 1, reset/power GPIO16 |
+| Ethernet yönetim | MDC GPIO23, MDIO GPIO18 |
+| RMII saat | GPIO0 input |
 | Modbus unit ID | 1 |
 
 Elektriksel bağlantıdan önce GR01 çıkış voltajı ve idle polaritesi osiloskopla
@@ -96,10 +113,11 @@ CRC-32/ISO-HDLC'dir. Kontrol vektörü
 Tutarlı snapshot yayımlama sırası:
 
 1. Yeni sequence değerini seç.
-2. Alanları ve reserved sıfırlarını staging görüntüsünde oluştur.
-3. Register 320-379 üzerinden CRC hesapla.
-4. Aynı değeri `begin_sequence` ve `end_sequence` alanlarına yaz.
-5. 64-register görüntüsünü atomik biçimde aktif görüntüyle değiştir.
+2. `begin_sequence` dahil CRC kapsamındaki alanları ve reserved sıfırlarını
+   staging görüntüsünde oluştur.
+3. Register 320-379 üzerinden CRC hesaplayıp 380-381'e yaz.
+4. Aynı sequence değerini CRC kapsamı dışındaki `end_sequence` alanına yaz.
+5. Tamamlanmış 64-register görüntüsünü atomik biçimde active yap.
 
 Her boot/watchdog resetinde yeni bir `gateway_session_id` üretilir; önceki
 snapshot yeniden geçerli ilan edilmez.
@@ -186,3 +204,16 @@ UART/Ethernet/Modbus kodu bu çekirdek testleri geçmeden eklenmemelidir.
 Her değişiklikte ilgili host testleri, biçim/statik kontroller ve
 `git diff --check` çalıştırılmalı; donanım gerektiren testler ayrı
 raporlanmalıdır.
+
+Güncel uygulama durumu ve sıradaki işler için [`ROADMAP.md`](ROADMAP.md)
+dosyasına bakın.
+
+PLC programlama ve HIL hazırlığı için gerekli register kabul sırası, fail-safe
+kuralları ve beklenen saha bilgileri [`PLC_INTEGRATION_GUIDE.md`](PLC_INTEGRATION_GUIDE.md)
+dosyasında toplanmıştır.
+
+Heap, bloklama ve watchdog denetim sonucu [`RUNTIME_AUDIT.md`](RUNTIME_AUDIT.md)
+dosyasında tutulur.
+
+Yerel/CI biçim ve statik uyarı kabul kapısı
+[`QUALITY_CHECKS.md`](QUALITY_CHECKS.md) dosyasında belgelenmiştir.
