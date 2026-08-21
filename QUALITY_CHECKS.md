@@ -23,6 +23,8 @@ Firmware daha önce aynı değişiklik setiyle derlendiyse hızlı kontrol:
   reddeder.
 - GitHub Actions her push/PR için host testlerini ve firmware build'ini tekrar
   çalıştırır.
+- GitHub host testleri `Debug` profiliyle derlenir; `core_tests.c` içindeki
+  `assert(...)` kontrollerinin `NDEBUG` nedeniyle kaldırılmasına izin verilmez.
 
 Windows script'i varsayılan olarak Clang'ı
 `C:\Program Files\LLVM\bin\clang.exe` konumunda arar. Farklı kurulum için:

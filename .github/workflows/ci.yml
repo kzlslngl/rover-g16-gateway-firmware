@@ -11,7 +11,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Configure host tests
-        run: cmake -S test -B test/build -DCMAKE_BUILD_TYPE=Release
+        # core_tests intentionally uses assert(); Debug keeps those checks active.
+        run: cmake -S test -B test/build -DCMAKE_BUILD_TYPE=Debug
       - name: Build host tests
         run: cmake --build test/build --parallel
       - name: Run host tests
