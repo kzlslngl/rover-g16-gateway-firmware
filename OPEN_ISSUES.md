@@ -217,9 +217,10 @@ SBUS recovery doğrulandı, fakat gerçek hata olayı henüz enjekte edilmedi.
 
 ## OI-008 — Release profilinde host test assertion'larının kaldırılması
 
-**Durum:** Açık; işlevsel firmware kapanışından önce CI düzeltmesi gerekli.
+**Durum:** Kapalı; commit `9480495` ile host test CI profili Debug yapıldı ve
+assertion kontrolleri etkin tutuldu.
 
-GitHub Actions `host-tests` işi CMake'i `Release` profiliyle yapılandırır.
+Önceki GitHub Actions `host-tests` işi CMake'i `Release` profiliyle yapılandırırdı.
 `test/core_tests.c` kontrolleri standart `assert(...)` kullandığı için
 `NDEBUG` altında assertion ifadeleri kaldırılır. Commit `404af0e` için build,
 assertion içinde kalan değişkenleri `-Werror` nedeniyle unused sayarak
@@ -228,5 +229,5 @@ kontrol yapmadan başarılı görünebilir.
 
 Gerekli çözüm ve kabul kriteri
 [`ESP_CLOSEOUT_REVIEW_2026-08-21.md`](ESP_CLOSEOUT_REVIEW_2026-08-21.md)
-belgesinin 2. bölümündedir. `host-tests` ve `esp32-build` hem push hem PR
-çalıştırmasında yeşil olmadan draft PR `#1` ana dala alınmamalıdır.
+belgesinin 2. bölümündedir. Commit `9480495` sonrasında `host-tests` ve
+`esp32-build` hem push hem PR çalıştırmasında yeşil doğrulanmıştır.

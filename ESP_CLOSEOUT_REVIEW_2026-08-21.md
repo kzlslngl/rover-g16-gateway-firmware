@@ -31,12 +31,12 @@ ESP gateway'in hedeflenen **işlevsel firmware kapsamı tamamlanmıştır**:
 - ana sözleşmedeki tam ESP known-result vektörü kaynak testinde birebir yer
   almaktadır (`CRC32 = 0x12749618`).
 
-Yeni ESP özelliği geliştirmeden önce tamamlanması gereken yalnız iki depo
-kapanış kapısı vardır:
+Kapanış denetiminde belirlenen iki depo kapısından CI düzeltmesi tamamlanmıştır:
 
-1. GitHub `host-tests` işi yeşile çevrilmelidir.
-2. Yeşil CI sonrasında draft PR `#1` gözden geçirilip `main` dalına
-   birleştirilmelidir.
+1. GitHub `host-tests` işi commit `9480495` ile Debug/test profilinde assertion
+   kontrolleri etkin tutularak yeşile çevrilmiştir.
+2. Push ve PR koşularında `host-tests` ile `esp32-build` birlikte yeşildir;
+   draft PR `#1` `main` dalına birleşmeye hazırdır.
 
 Bu iki işlemden sonra ESP işi **bakım/commissioning moduna** alınabilir. Daha
 sonraki olağan değişiklikler production IP/gateway/VLAN, yapılandırma değeri,
@@ -51,9 +51,9 @@ GitHub Actions'ta commit `404af0e` için:
 | İş | Sonuç |
 |---|---|
 | `esp32-build` | Başarılı |
-| `host-tests` | Başarısız |
+| `host-tests` | Başarılı — commit `9480495` |
 
-`host-tests`, CMake'i `-DCMAKE_BUILD_TYPE=Release` ile yapılandırmaktadır.
+Önceki `host-tests`, CMake'i `-DCMAKE_BUILD_TYPE=Release` ile yapılandırmaktaydı.
 Testler `<assert.h>` içindeki `assert(...)` ifadelerine dayandığı için Release
 derlemesinde `NDEBUG` bu kontrolleri kaldırır. Böylece assertion içinde
 kullanılan değişkenler `-Werror` altında `unused-variable` hatasına dönüşür ve
@@ -67,9 +67,9 @@ ESP Firmware Codex'i aşağıdaki iki güvenli çözümden birini uygulamalıdı
 - testlerde Release/NDEBUG'den etkilenmeyen, hata durumunda dosya/satır yazıp
   non-zero dönen kalıcı bir `CHECK` mekanizması kullanmak.
 
-Kabul kriteri, hem push hem PR GitHub Actions çalıştırmasında `host-tests` ve
-`esp32-build` işlerinin birlikte yeşil olmasıdır. Sadece `unused` uyarılarını
-cast ile susturmak kabul edilmez.
+Çözüm olarak host test CI profili `Debug` yapılmış, assertion kontrolleri etkin
+tutulmuştur. Hem push hem PR GitHub Actions çalıştırmasında `host-tests` ve
+`esp32-build` birlikte yeşildir; uyarılar cast ile susturulmamıştır.
 
 ## 3. Fiziksel doğrulama durumu
 
@@ -125,6 +125,6 @@ Son durum:
 İşlevsel ESP firmware kapsamı : TAMAM
 Fiziksel bench kapsamı        : YETERLİ / production commissioning erteli
 ESP32 firmware CI build       : YEŞİL
-Host güvenli çekirdek CI      : KIRMIZI — kapanış öncesi düzeltilecek
-Ana dala birleşme             : BEKLİYOR — draft PR #1
+Host güvenli çekirdek CI      : YEŞİL
+Ana dala birleşme             : HAZIR — PR #1 temiz ve merge edilebilir
 ```
